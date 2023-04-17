@@ -9,6 +9,7 @@ from colorama import Fore, Style
 
 from autogpt.config import Config
 from autogpt.logs import logger
+from processing.split import split_text 
 
 CFG = Config()
 
@@ -143,16 +144,17 @@ def create_embedding_with_ada(text) -> list:
     for attempt in range(num_retries):
         backoff = 2 ** (attempt + 2)
         try:
+            chunk = split_text(text)[0]
             if CFG.use_azure:
                 return openai.Embedding.create(
-                    input=[text],
+                    input=[chunk],
                     engine=CFG.get_azure_deployment_id_for_model(
                         "text-embedding-ada-002"
                     ),
                 )["data"][0]["embedding"]
             else:
                 return openai.Embedding.create(
-                    input=[text], model="text-embedding-ada-002"
+                    input=[chunk], model="text-embedding-ada-002"
                 )["data"][0]["embedding"]
         except RateLimitError:
             pass
